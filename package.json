@@ -1,0 +1,13 @@
+{
+  "name": "phaser-mod-file-plugin",
+  "version": "1.0.0",
+  "description": "This plugin should provide a mean to provide amiga mod file support in the amazing (Phaser framework)[https://phaser.io/].",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
