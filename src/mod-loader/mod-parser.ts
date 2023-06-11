@@ -1,4 +1,43 @@
-import type { Song, SampleInformation } from "../model";
+import type { Song, SampleInformation, SongInformation, Note, Pattern } from "../model";
+
+const tuning = {
+    856: 'C-1',
+    808: 'C#-1',
+    762: 'D-1',
+    720: 'D#-1',
+    678: 'E-1',
+    640: 'F-1',
+    604: 'F#-1',
+    570: 'G-1',
+    538: 'G#-1',
+    508: 'A-1',
+    480: 'A#-1',
+    453: 'B-1',
+    428: 'C-2',
+    404: 'C#-2',
+    381: 'D-2',
+    360: 'D#-2',
+    339: 'E-2',
+    320: 'F-2',
+    302: 'F#-2',
+    285: 'G-2',
+    269: 'G#-2',
+    254: 'A-2',
+    240: 'A#-2',
+    226: 'B-2',
+    214: 'C-3',
+    202: 'C#-3',
+    190: 'D-3',
+    180: 'D#-3',
+    170: 'E-3',
+    160: 'F-3',
+    151: 'F#-3',
+    143: 'G-3',
+    135: 'G#-3',
+    127: 'A-3',
+    120: 'A#-3',
+    113: 'B-3'
+}
 
 export class ModParser {
     private modData: ArrayBuffer;
@@ -10,10 +49,13 @@ export class ModParser {
     }
 
     parse() {
-        const sampleData = this.readMODSampleData();
         const title = this.readStringData(0, 20);
         const sampleInformation = this.readSampleInfo();
-        this.song = { title, sampleData, sampleInformation };
+        const songInformation = this.readSongInformation();
+        const numPatterns = Math.max(...songInformation.positions);
+        const patterns = this.readPatterns(numPatterns);
+        this.song = { title, sampleInformation, songInformation };
+        console.log(patterns)
         console.log(this.song);
     }
 
@@ -21,6 +63,57 @@ export class ModParser {
         const stringBuffer = new Uint8Array(this.modData, offset, length);
         const stringArray = Array.from(stringBuffer).filter((charCode) => charCode !== 0);
         return String.fromCharCode.apply(null, stringArray).trim();
+    }
+
+    readPatterns(numPatterns: number) {
+        const dataView = new DataView(this.modData);
+        let offset = 1084;
+
+        for(let i = 0; i < numPatterns; i++) {
+            this.readPattern(offset + 1024 * i);
+        }
+    }
+
+    readPattern(offset: number): Pattern[] {
+        const dataView = new DataView(this.modData);
+        const patterns: Pattern[] = [];
+        let values: { channels: Note[] }[] = [];
+        for (let i = 0; i < 64; i++) {
+            const channels: Note[] = [];
+            for (let c = 0; c < 4; c ++) {
+                let data = dataView.getUint32(offset + i * 4);
+                const effectCommand = data & 0x00000fff;
+                data = data >> 12;
+                const lowerPos = data & 0x0000000f;
+                data = data >> 4;
+                const period = data & 0x00000fff;
+                data = data >> 12;
+                const upperPos = data & 0x0000000f;
+                data = data >> 4;
+                const pos = upperPos << 4 | lowerPos;
+                channels[c] = {
+                    pos,
+                    period: period,
+                    tune: tuning[period] ? tuning[period]: '---',
+                    effect: effectCommand
+                };
+                values.push({ channels });
+            }
+            patterns.push({ values });
+        };
+        return patterns;
+    }
+
+    readSongInformation(): SongInformation {
+        const dataView = new DataView(this.modData);
+        let offset = 950;
+        const length = dataView.getUint8(offset);
+        const positions: number[] = [];
+        for (let i = 0; i < 128; i++) {
+            positions.push(dataView.getUint8(offset + 2 + i))
+        }
+        const letters = this.readStringData(offset + 130, 4);
+        return { length, positions, letters };
     }
 
     readSampleInfo(): SampleInformation[] {
@@ -33,7 +126,7 @@ export class ModParser {
 
     readSample(sampleNumber: number): SampleInformation {
         const dataView = new DataView(this.modData);
-        let offset = 20 + 30 * sampleNumber;
+        const offset = 20 + 30 * sampleNumber;
         const name = this.readStringData(offset, 22);
         const length = 2 * dataView.getUint16(offset + 22);
         const finetune = 0x0F && dataView.getUint8(offset + 24);
@@ -42,35 +135,5 @@ export class ModParser {
         const repeatLength = 2 * dataView.getUint16(offset + 28);
         return { name, length, finetune, volume, repeatLength, repeatPoint };
     }
-
-    readMODSampleData(): Uint8Array[] {
-        const fileData = new Uint8Array(this.modData);
-        const dataView = new DataView(this.modData);
-      
-        // Read the number of samples from the MOD file header
-        const numSamples = dataView.getUint16(950, false);
-        console.log(numSamples);
-        
-      
-        // Calculate the offset where the sample data starts
-        const sampleDataOffset = 1084 + numSamples * 30;
-      
-        // Create an array to store the sample data
-        const sampleData: Uint8Array[] = new Array(numSamples);
-      
-        // Read each sample from the file data
-        for (let i = 0; i < numSamples; i++) {
-          // Calculate the offset for the current sample
-          const sampleOffset = sampleDataOffset + i * 64;
-      
-          // Extract the sample data
-          const sampleBytes = fileData.slice(sampleOffset, sampleOffset + 64);
-      
-          // Store the processed sample data
-          sampleData[i] = sampleBytes;
-        }
-      
-        return sampleData;
-      }
       
 }

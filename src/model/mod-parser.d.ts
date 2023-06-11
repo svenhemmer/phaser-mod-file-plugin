@@ -5,7 +5,7 @@ export interface ModParser {
 export type Song = {
     title: string;
     sampleInformation: SampleInformation[];
-    sampleData: Uint8Array[];
+    songInformation: SongInformation;
 }
 
 export type SampleInformation = {
@@ -15,4 +15,23 @@ export type SampleInformation = {
     volume: number;
     repeatPoint: number;
     repeatLength: number;
+}
+
+export type SongInformation = {
+    length: number;
+    positions: number[];
+    letters: string;
+}
+
+type Note = { 
+    period: number;
+    tune: string;
+    effect: number;
+    pos: number;
+}
+
+export type Pattern = {
+    values: {
+        channels: Note[]
+    }[]; 
 }
