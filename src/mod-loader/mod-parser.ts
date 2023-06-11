@@ -54,9 +54,11 @@ export class ModParser {
         const songInformation = this.readSongInformation();
         const numPatterns = Math.max(...songInformation.positions);
         const patterns = this.readPatterns(numPatterns);
-        this.song = { title, sampleInformation, songInformation };
-        console.log(patterns)
-        console.log(this.song);
+        this.song = { title, sampleInformation, songInformation, patterns };
+    }
+
+    getSong() {
+        return this.song;
     }
 
     readStringData(offset: number, length: number) {
@@ -65,23 +67,24 @@ export class ModParser {
         return String.fromCharCode.apply(null, stringArray).trim();
     }
 
-    readPatterns(numPatterns: number) {
+    readPatterns(numPatterns: number): Pattern[] {
         const dataView = new DataView(this.modData);
         let offset = 1084;
 
+        const patterns: Pattern[] = [];
         for(let i = 0; i < numPatterns; i++) {
-            this.readPattern(offset + 1024 * i);
+            patterns.push(this.readPattern(offset + 1024 * i));
         }
+        return patterns;
     }
 
-    readPattern(offset: number): Pattern[] {
+    readPattern(offset: number): Pattern {
         const dataView = new DataView(this.modData);
-        const patterns: Pattern[] = [];
         let values: { channels: Note[] }[] = [];
         for (let i = 0; i < 64; i++) {
             const channels: Note[] = [];
             for (let c = 0; c < 4; c ++) {
-                let data = dataView.getUint32(offset + i * 4);
+                let data = dataView.getUint32(offset + (i + c) * 4);
                 const effectCommand = data & 0x00000fff;
                 data = data >> 12;
                 const lowerPos = data & 0x0000000f;
@@ -97,11 +100,10 @@ export class ModParser {
                     tune: tuning[period] ? tuning[period]: '---',
                     effect: effectCommand
                 };
-                values.push({ channels });
             }
-            patterns.push({ values });
+            values.push({ channels });
         };
-        return patterns;
+        return { values };
     }
 
     readSongInformation(): SongInformation {

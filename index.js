@@ -15,8 +15,4 @@ export class ModSoundPlugin extends BasePlugin {
     const parser = new ModParser(data);
     parser.parse();
   }
-
-  reverseWord(word) {
-    return word.split('').reverse().join('');
-  }
 }

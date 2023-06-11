@@ -6,6 +6,7 @@ export type Song = {
     title: string;
     sampleInformation: SampleInformation[];
     songInformation: SongInformation;
+    patterns: Pattern[];
 }
 
 export type SampleInformation = {
