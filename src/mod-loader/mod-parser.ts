@@ -54,7 +54,9 @@ export class ModParser {
         const songInformation = this.readSongInformation();
         const numPatterns = Math.max(...songInformation.positions);
         const patterns = this.readPatterns(numPatterns);
-        this.song = { title, sampleInformation, songInformation, patterns };
+        const sampleData = this.readSampleData(numPatterns, sampleInformation);
+        this.song = { title, sampleInformation, songInformation, patterns, sampleData };
+        console.log(this.song)
     }
 
     getSong() {
@@ -67,8 +69,19 @@ export class ModParser {
         return String.fromCharCode.apply(null, stringArray).trim();
     }
 
+    readSampleData (numPatterns: number, sampleInformation: SampleInformation[]) {
+        let offset = 1084 + 1024 * numPatterns;
+        const sampleData: Uint8Array[] = [];
+        for (let i = 0; i < sampleInformation.length; i++) {
+            const sampleLength = sampleInformation[i].length;
+            const sampleBuffer = new Uint8Array(this.modData, offset, sampleLength);
+            sampleData.push(sampleBuffer);
+            offset += sampleLength;
+        }
+        return sampleData;
+    }
+
     readPatterns(numPatterns: number): Pattern[] {
-        const dataView = new DataView(this.modData);
         let offset = 1084;
 
         const patterns: Pattern[] = [];
