@@ -1,6 +1,8 @@
 export * from './src/model';
 
+import { Player, WebAudioSoundManager } from './src/model';
+
 export interface ModSoundPlugin {
-    init: (file: ArrayBuffer, audioContext: AudioContext) => void;
-    parseModFile: (data: ArrayBuffer) => void;
+    init: (soundManager: WebAudioSoundManager) => void;
+    parseModFile: (data: ArrayBuffer) => Player;
 }

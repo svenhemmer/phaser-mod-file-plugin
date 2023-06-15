@@ -7,7 +7,7 @@ export type Song = {
     sampleInformation: SampleInformation[];
     songInformation: SongInformation;
     patterns: Pattern[];
-    sampleData: Uint8Array[];
+    sampleData: Float32Array[];
 }
 
 export type SampleInformation = {

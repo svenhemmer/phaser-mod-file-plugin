@@ -70,12 +70,18 @@ export class ModParser {
     }
 
     readSampleData (numPatterns: number, sampleInformation: SampleInformation[]) {
-        let offset = 1084 + 1024 * numPatterns;
-        const sampleData: Uint8Array[] = [];
+        let offset = 1084 + 1024 + (1024 * numPatterns);
+        const sampleData: Float32Array[] = [];
         for (let i = 0; i < sampleInformation.length; i++) {
+            
             const sampleLength = sampleInformation[i].length;
-            const sampleBuffer = new Uint8Array(this.modData, offset, sampleLength);
-            sampleData.push(sampleBuffer);
+            if (sampleLength === 0) {
+                break;
+            }
+            const sampleBuffer = new Int8Array(this.modData, offset+2, sampleLength - 2);
+            const arr = Float32Array.from(sampleBuffer).map(val => (val / 128.0) *.99);
+            
+            sampleData.push(arr);
             offset += sampleLength;
         }
         return sampleData;
